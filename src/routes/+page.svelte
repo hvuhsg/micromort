@@ -130,6 +130,16 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Micromort Calculator — What's Your Daily Risk?</title>
+	<meta property="og:title" content="Micromort Calculator — What's Your Daily Risk?" />
+	<meta property="og:description" content="Find out your estimated daily micromorts based on your body, habits, and location. Compare yourself with others." />
+	<meta property="og:image" content="/og-image.svg" />
+	<meta name="twitter:title" content="Micromort Calculator — What's Your Daily Risk?" />
+	<meta name="twitter:description" content="Find out your estimated daily micromorts based on your body, habits, and location. Compare yourself with others." />
+	<meta name="twitter:image" content="/og-image.svg" />
+</svelte:head>
+
 <main class="mx-auto max-w-2xl px-4 py-8">
 	<div class="mb-8 text-center">
 		<h1 class="mb-2 text-3xl font-bold text-gray-900">Micromort Calculator</h1>

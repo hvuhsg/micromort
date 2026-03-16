@@ -6,6 +6,6 @@ pages_build_output_dir = ".svelte-kit/cloudflare"
 [[d1_databases]]
 binding = "DB"
 database_name = "micromort-project"
-database_id = "PLACEHOLDER_RUN_wrangler_d1_create"
+database_id = "f86c311a-9ffb-4f74-867e-43d86d953fcd"
 migrations_dir = "./src/lib/server/db/migrations"
 preview_database_id = "DB"

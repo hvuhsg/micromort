@@ -14,7 +14,31 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	const db = platform?.env?.DB;
 	if (!db) throw error(500, 'Database not available');
 
-	const data: SurveyData = await request.json();
+	const raw = await request.json();
+	const data: SurveyData = {
+		age: raw.age ?? 30,
+		sex: raw.sex || 'male',
+		weight_kg: raw.weight_kg ?? 75,
+		height_cm: raw.height_cm ?? 175,
+		has_heart_disease: raw.has_heart_disease ?? false,
+		has_diabetes: raw.has_diabetes ?? false,
+		has_hypertension: raw.has_hypertension ?? false,
+		has_cancer: raw.has_cancer ?? false,
+		has_respiratory_disease: raw.has_respiratory_disease ?? false,
+		transport_mode: raw.transport_mode || 'car',
+		km_per_day: raw.km_per_day ?? 0,
+		diet: raw.diet || 'average',
+		drinks_per_week: raw.drinks_per_week ?? 0,
+		smoking_status: raw.smoking_status || 'never',
+		cigarettes_per_day: raw.cigarettes_per_day ?? 0,
+		exercise_hours_per_week: raw.exercise_hours_per_week ?? 0,
+		does_skydiving: raw.does_skydiving ?? false,
+		does_scuba: raw.does_scuba ?? false,
+		does_motorcycling: raw.does_motorcycling ?? false,
+		does_skiing: raw.does_skiing ?? false,
+		does_rock_climbing: raw.does_rock_climbing ?? false,
+		country: raw.country || 'United States'
+	};
 	const result = calculateMicromorts(data);
 	const id = generateId();
 

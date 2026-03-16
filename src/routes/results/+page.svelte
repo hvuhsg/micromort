@@ -22,14 +22,11 @@
 			max: number;
 		};
 		distribution: { bucket: string; count: number }[];
-		breakdown?: { label: string; category: string; micromorts: number }[];
 	}
 
 	let stats = $state<StatsData | null>(null);
 	let loading = $state(true);
 	let error = $state('');
-
-	// Stored from the submit response in sessionStorage
 	let breakdown = $state<{ label: string; category: string; micromorts: number }[]>([]);
 
 	onMount(async () => {
@@ -40,7 +37,6 @@
 			return;
 		}
 
-		// Try to get breakdown from sessionStorage (set during submit)
 		try {
 			const stored = sessionStorage.getItem(`micromort_${id}`);
 			if (stored) breakdown = JSON.parse(stored);
@@ -72,8 +68,31 @@
 		return 'higher risk than most';
 	}
 
-	function maxBucket(dist: { bucket: string; count: number }[]): number {
-		return Math.max(...dist.map((d) => d.count), 1);
+	// Build SVG bar chart data from distribution
+	function chartData(dist: { bucket: string; count: number }[], yourMicromorts: number) {
+		const bucketRanges: { label: string; min: number; max: number }[] = [
+			{ label: '0-2', min: 0, max: 2 },
+			{ label: '2-5', min: 2, max: 5 },
+			{ label: '5-10', min: 5, max: 10 },
+			{ label: '10-20', min: 10, max: 20 },
+			{ label: '20-50', min: 20, max: 50 },
+			{ label: '50-100', min: 50, max: 100 },
+			{ label: '100+', min: 100, max: Infinity }
+		];
+
+		const maxCount = Math.max(...dist.map((d) => d.count), 1);
+
+		return bucketRanges.map((range) => {
+			const found = dist.find((d) => d.bucket === range.label);
+			const count = found?.count ?? 0;
+			const isYours = yourMicromorts >= range.min && yourMicromorts < range.max;
+			return {
+				label: range.label,
+				count,
+				height: (count / maxCount) * 100,
+				isYours
+			};
+		});
 	}
 </script>
 
@@ -91,7 +110,7 @@
 
 		<!-- Big number -->
 		<div class="mb-8 rounded-xl bg-white p-8 text-center shadow-sm">
-			<p class="mb-1 text-sm font-medium text-gray-500 uppercase">Your daily micromorts</p>
+			<p class="mb-1 text-sm font-medium uppercase text-gray-500">Your daily micromorts</p>
 			<p class="text-6xl font-bold text-gray-900">{stats.your_micromorts}</p>
 			<p class="mt-2 text-lg font-medium {risk.color}">{risk.label} Risk</p>
 			<p class="mt-1 text-sm text-gray-500">
@@ -102,7 +121,7 @@
 		<!-- Comparisons -->
 		<div class="mb-8 grid grid-cols-3 gap-4">
 			<div class="rounded-xl bg-white p-4 text-center shadow-sm">
-				<p class="text-xs font-medium text-gray-500 uppercase">vs Everyone</p>
+				<p class="text-xs font-medium uppercase text-gray-500">vs Everyone</p>
 				<p class="mt-1 text-2xl font-bold text-gray-900">
 					{stats.comparisons.overall.percentile}th
 				</p>
@@ -112,7 +131,9 @@
 				</p>
 			</div>
 			<div class="rounded-xl bg-white p-4 text-center shadow-sm">
-				<p class="text-xs font-medium text-gray-500 uppercase">{stats.comparisons.age_group.label}</p>
+				<p class="text-xs font-medium uppercase text-gray-500">
+					{stats.comparisons.age_group.label}
+				</p>
 				<p class="mt-1 text-2xl font-bold text-gray-900">
 					{stats.comparisons.age_group.percentile}th
 				</p>
@@ -122,7 +143,9 @@
 				</p>
 			</div>
 			<div class="rounded-xl bg-white p-4 text-center shadow-sm">
-				<p class="text-xs font-medium text-gray-500 uppercase">{stats.comparisons.country.label}</p>
+				<p class="text-xs font-medium uppercase text-gray-500">
+					{stats.comparisons.country.label}
+				</p>
 				<p class="mt-1 text-2xl font-bold text-gray-900">
 					{stats.comparisons.country.percentile}th
 				</p>
@@ -133,38 +156,135 @@
 			</div>
 		</div>
 
-		<!-- Distribution histogram -->
+		<!-- Distribution chart -->
 		{#if stats.distribution.length > 0}
+			{@const bars = chartData(stats.distribution, stats.your_micromorts)}
 			<div class="mb-8 rounded-xl bg-white p-6 shadow-sm">
-				<h2 class="mb-4 text-lg font-semibold text-gray-900">How you compare</h2>
-				<div class="space-y-2">
-					{#each stats.distribution as bucket}
-						{@const isYours =
-							(bucket.bucket === '0-2' && stats.your_micromorts < 2) ||
-							(bucket.bucket === '2-5' && stats.your_micromorts >= 2 && stats.your_micromorts < 5) ||
-							(bucket.bucket === '5-10' && stats.your_micromorts >= 5 && stats.your_micromorts < 10) ||
-							(bucket.bucket === '10-20' && stats.your_micromorts >= 10 && stats.your_micromorts < 20) ||
-							(bucket.bucket === '20-50' && stats.your_micromorts >= 20 && stats.your_micromorts < 50) ||
-							(bucket.bucket === '50-100' && stats.your_micromorts >= 50 && stats.your_micromorts < 100) ||
-							(bucket.bucket === '100+' && stats.your_micromorts >= 100)}
-						<div class="flex items-center gap-3">
-							<span class="w-16 text-right text-xs text-gray-500">{bucket.bucket}</span>
-							<div class="flex-1">
-								<div
-									class="h-6 rounded {isYours ? 'bg-blue-600' : 'bg-gray-200'}"
-									style="width: {Math.max(4, (bucket.count / maxBucket(stats.distribution)) * 100)}%"
-								></div>
-							</div>
-							<span class="w-8 text-xs text-gray-500">{bucket.count}</span>
-							{#if isYours}
-								<span class="text-xs font-medium text-blue-600">You</span>
-							{/if}
-						</div>
-					{/each}
-				</div>
-				<p class="mt-3 text-xs text-gray-400">
-					Global average: {stats.global.average} micromorts/day
+				<h2 class="mb-2 text-lg font-semibold text-gray-900">Where you fall</h2>
+				<p class="mb-4 text-sm text-gray-500">
+					Distribution of all submissions by daily micromorts
 				</p>
+
+				<!-- SVG Bar Chart -->
+				<div class="relative">
+					<svg viewBox="0 0 700 300" class="w-full" preserveAspectRatio="xMidYMid meet">
+						<!-- Y-axis line -->
+						<line x1="50" y1="20" x2="50" y2="240" stroke="#e5e7eb" stroke-width="1" />
+						<!-- X-axis line -->
+						<line x1="50" y1="240" x2="680" y2="240" stroke="#e5e7eb" stroke-width="1" />
+
+						<!-- Grid lines -->
+						{#each [0, 25, 50, 75, 100] as pct}
+							{@const y = 240 - (pct / 100) * 210}
+							<line
+								x1="50"
+								y1={y}
+								x2="680"
+								y2={y}
+								stroke="#f3f4f6"
+								stroke-width="1"
+								stroke-dasharray={pct > 0 ? '4,4' : 'none'}
+							/>
+						{/each}
+
+						<!-- Bars -->
+						{#each bars as bar, i}
+							{@const barWidth = 75}
+							{@const gap = 15}
+							{@const x = 60 + i * (barWidth + gap)}
+							{@const barHeight = Math.max(3, (bar.height / 100) * 210)}
+							{@const y = 240 - barHeight}
+
+							<!-- Bar -->
+							<rect
+								{x}
+								{y}
+								width={barWidth}
+								height={barHeight}
+								rx="4"
+								fill={bar.isYours ? '#2563eb' : '#e5e7eb'}
+								class="transition-all duration-300"
+							/>
+
+							<!-- Count on top of bar -->
+							{#if bar.count > 0}
+								<text
+									x={x + barWidth / 2}
+									y={y - 6}
+									text-anchor="middle"
+									class="fill-gray-500 text-[11px]"
+								>
+									{bar.count}
+								</text>
+							{/if}
+
+							<!-- "YOU" marker -->
+							{#if bar.isYours}
+								<!-- Arrow pointing down -->
+								<polygon
+									points="{x + barWidth / 2 - 6},{y - 30} {x + barWidth / 2 + 6},{y - 30} {x + barWidth / 2},{y - 20}"
+									fill="#2563eb"
+								/>
+								<text
+									x={x + barWidth / 2}
+									y={y - 34}
+									text-anchor="middle"
+									class="fill-blue-600 text-[12px] font-bold"
+								>
+									YOU
+								</text>
+							{/if}
+
+							<!-- X-axis label -->
+							<text
+								x={x + barWidth / 2}
+								y="260"
+								text-anchor="middle"
+								class="fill-gray-500 text-[11px]"
+							>
+								{bar.label}
+							</text>
+						{/each}
+
+						<!-- X-axis title -->
+						<text x="370" y="285" text-anchor="middle" class="fill-gray-400 text-[12px]">
+							Daily micromorts
+						</text>
+
+						<!-- Average line -->
+						{#if stats.global.average > 0}
+							{@const avgBucketIndex =
+								stats.global.average < 2
+									? 0
+									: stats.global.average < 5
+										? 1
+										: stats.global.average < 10
+											? 2
+											: stats.global.average < 20
+												? 3
+												: stats.global.average < 50
+													? 4
+													: stats.global.average < 100
+														? 5
+														: 6}
+							{@const barWidth = 75}
+							{@const gap = 15}
+							{@const avgX = 60 + avgBucketIndex * (barWidth + gap) + barWidth / 2}
+							<line
+								x1={avgX}
+								y1="20"
+								x2={avgX}
+								y2="240"
+								stroke="#f59e0b"
+								stroke-width="2"
+								stroke-dasharray="6,4"
+							/>
+							<text x={avgX + 4} y="16" class="fill-amber-500 text-[10px]">
+								avg: {stats.global.average}
+							</text>
+						{/if}
+					</svg>
+				</div>
 			</div>
 		{/if}
 
@@ -182,7 +302,9 @@
 									<div class="flex justify-between text-sm">
 										<span class="text-gray-700">{item.label}</span>
 										<span
-											class="font-mono {item.micromorts >= 0 ? 'text-red-600' : 'text-green-600'}"
+											class="font-mono {item.micromorts >= 0
+												? 'text-red-600'
+												: 'text-green-600'}"
 										>
 											{item.micromorts > 0 ? '+' : ''}{item.micromorts}
 										</span>

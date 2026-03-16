@@ -4,10 +4,10 @@
 	const totalSteps = 4;
 
 	// Body
-	let age = $state(30);
-	let sex = $state<'male' | 'female'>('male');
-	let weight_kg = $state(75);
-	let height_cm = $state(175);
+	let age = $state<number | undefined>(undefined);
+	let sex = $state<'male' | 'female' | ''>('');
+	let weight_kg = $state<number | undefined>(undefined);
+	let height_cm = $state<number | undefined>(undefined);
 	let has_heart_disease = $state(false);
 	let has_diabetes = $state(false);
 	let has_hypertension = $state(false);
@@ -15,15 +15,13 @@
 	let has_respiratory_disease = $state(false);
 
 	// Habits
-	let transport_mode = $state<'car' | 'motorcycle' | 'bicycle' | 'public_transit' | 'walking'>(
-		'car'
-	);
-	let km_per_day = $state(30);
-	let diet = $state<'healthy' | 'average' | 'unhealthy'>('average');
-	let drinks_per_week = $state(3);
-	let smoking_status = $state<'never' | 'former' | 'current'>('never');
-	let cigarettes_per_day = $state(0);
-	let exercise_hours_per_week = $state(3);
+	let transport_mode = $state<'car' | 'motorcycle' | 'bicycle' | 'public_transit' | 'walking' | ''>('');
+	let km_per_day = $state<number | undefined>(undefined);
+	let diet = $state<'healthy' | 'average' | 'unhealthy' | ''>('');
+	let drinks_per_week = $state<number | undefined>(undefined);
+	let smoking_status = $state<'never' | 'former' | 'current' | ''>('');
+	let cigarettes_per_day = $state<number | undefined>(undefined);
+	let exercise_hours_per_week = $state<number | undefined>(undefined);
 
 	// Activities
 	let does_skydiving = $state(false);
@@ -33,7 +31,7 @@
 	let does_rock_climbing = $state(false);
 
 	// Location
-	let country = $state('United States');
+	let country = $state('');
 
 	const countries = [
 		'Afghanistan',
@@ -170,6 +168,7 @@
 							bind:value={age}
 							min="1"
 							max="120"
+							placeholder="e.g. 30"
 							class="w-full rounded-lg border border-gray-300 px-3 py-2"
 						/>
 					</div>
@@ -180,6 +179,7 @@
 							bind:value={sex}
 							class="w-full rounded-lg border border-gray-300 px-3 py-2"
 						>
+							<option value="" disabled>Select...</option>
 							<option value="male">Male</option>
 							<option value="female">Female</option>
 						</select>
@@ -196,6 +196,7 @@
 							bind:value={weight_kg}
 							min="20"
 							max="300"
+							placeholder="e.g. 75"
 							class="w-full rounded-lg border border-gray-300 px-3 py-2"
 						/>
 					</div>
@@ -209,6 +210,7 @@
 							bind:value={height_cm}
 							min="100"
 							max="250"
+							placeholder="e.g. 175"
 							class="w-full rounded-lg border border-gray-300 px-3 py-2"
 						/>
 					</div>
@@ -255,6 +257,7 @@
 							bind:value={transport_mode}
 							class="w-full rounded-lg border border-gray-300 px-3 py-2"
 						>
+							<option value="" disabled>Select...</option>
 							<option value="car">Car</option>
 							<option value="motorcycle">Motorcycle</option>
 							<option value="bicycle">Bicycle</option>
@@ -270,6 +273,7 @@
 							bind:value={km_per_day}
 							min="0"
 							max="500"
+							placeholder="e.g. 30"
 							class="w-full rounded-lg border border-gray-300 px-3 py-2"
 						/>
 					</div>
@@ -282,6 +286,7 @@
 						bind:value={diet}
 						class="w-full rounded-lg border border-gray-300 px-3 py-2"
 					>
+						<option value="" disabled>Select...</option>
 						<option value="healthy">Healthy (lots of fruits, vegetables, whole grains)</option>
 						<option value="average">Average</option>
 						<option value="unhealthy">Unhealthy (processed food, high sugar/fat)</option>
@@ -298,6 +303,7 @@
 						bind:value={drinks_per_week}
 						min="0"
 						max="100"
+						placeholder="e.g. 3"
 						class="w-full rounded-lg border border-gray-300 px-3 py-2"
 					/>
 				</div>
@@ -311,6 +317,7 @@
 						bind:value={smoking_status}
 						class="w-full rounded-lg border border-gray-300 px-3 py-2"
 					>
+						<option value="" disabled>Select...</option>
 						<option value="never">Never smoked</option>
 						<option value="former">Former smoker</option>
 						<option value="current">Current smoker</option>
@@ -328,6 +335,7 @@
 							bind:value={cigarettes_per_day}
 							min="1"
 							max="100"
+							placeholder="e.g. 10"
 							class="w-full rounded-lg border border-gray-300 px-3 py-2"
 						/>
 					</div>
@@ -344,6 +352,7 @@
 						min="0"
 						max="40"
 						step="0.5"
+						placeholder="e.g. 3"
 						class="w-full rounded-lg border border-gray-300 px-3 py-2"
 					/>
 				</div>
@@ -401,6 +410,7 @@
 					bind:value={country}
 					class="w-full rounded-lg border border-gray-300 px-3 py-2"
 				>
+					<option value="" disabled>Select your country...</option>
 					{#each countries as c}
 						<option value={c}>{c}</option>
 					{/each}
